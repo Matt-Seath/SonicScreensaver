@@ -2,6 +2,23 @@
 #include <time.h>
 #include "animation.h"
 
+
+// Created by Matt Seath for RT Gaming Tech Assessment
+
+// ASSUMPTIONS:
+//  Game Window is a fixed size of 1500 x 900px,
+//  Game uses SFML library,
+//  (0, 0) is top-left of screen,
+//  Game logo uses a texture atlas to cycle through animation frames,
+
+
+
+bool CanWeContinue()
+{
+    return true;
+}
+
+
 int main()
 {
     sf::RenderWindow window(sf::VideoMode(1500, 900), "RT Gaming Test", sf::Style::Titlebar | sf::Style::Close);
@@ -14,18 +31,19 @@ int main()
 
     Animation animation(&texture, sf::Vector2u(8, 1), 0.3f);
 
-    float deltaTime = 0.0f;
-    sf::Clock clock;
-
-    //randomly choose starting point of sprite
-    int x =  100;
-    int y =  100;
-    
-    sf::Vector2f shapePosition(x, y);
-    sprite.setPosition(shapePosition);
-
     float xVelocity = 2.0f;
     float yVelocity = 2.0f;
+    float deltaTime = 0.0f;
+
+    sf::Clock clock;
+    bool has_entered = false;
+
+    //randomly choose starting point for sonic off-screen along the y-axis
+    int x =  -300;
+    int y =  std::rand() % 600;
+    
+    sf::Vector2f Render(x, y);
+    sprite.setPosition(Render);
 
     while (window.isOpen())
     {
@@ -34,21 +52,27 @@ int main()
         sf::Event event;
         while (window.pollEvent(event))
         {
-            if (event.type == sf::Event::Closed)
+            // Check to see if animation can continue
+            if (!CanWeContinue() || event.type == sf::Event::Closed)
                 window.close();
-
         }
         
-        // movements
-        shapePosition.x += xVelocity;
-        shapePosition.y += yVelocity;
+        // sprite movements
+        Render.x += xVelocity;
+        Render.y += yVelocity;
 
-        if (shapePosition.x < 0 || shapePosition.x > window.getSize().x - sprite.getLocalBounds().width + 5)
-            xVelocity = -xVelocity;
-        if (shapePosition.y < 0 || shapePosition.y > window.getSize().y - sprite.getLocalBounds().height + 20)
+        // initially allow sprite to pass the screen bounds to enter the screen
+        if (has_entered)
+        {
+            if (Render.x < 0 || Render.x > window.getSize().x - sprite.getLocalBounds().width + 1)
+                xVelocity = -xVelocity;
+        }
+        if (Render.y < 0 || Render.y > window.getSize().y - sprite.getLocalBounds().height + 1)
+        {
             yVelocity = -yVelocity;
-
-        sprite.setPosition(shapePosition);
+            has_entered = true;
+        }
+        sprite.setPosition(Render);
         animation.Update(0, deltaTime);
         sprite.setTextureRect(animation.uvRect);
 
